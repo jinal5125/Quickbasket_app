@@ -1,0 +1,52 @@
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login · professional</title>
+
+    <link rel="stylesheet" href="{% static 'seller/css/login.css' %}">
+</head>
+<body>
+
+<div class="card">
+    <h1>Login</h1>
+
+    {% if s_msg %}
+    <div class="alert alert-success" rol="alert">
+        {{ s_msg }}
+    </div>
+    {% endif %}
+
+    <form method="post" action="{% url 'login' %}">
+        {% csrf_token %}
+
+        <div class="field-group">
+            <label>Email</label>
+            <input type="email" name="email" placeholder="Enter your email" required>
+        </div>
+        <div class="field-group">
+            <label>Password</label>
+            <input type="password" name="password" placeholder="Enter password" required>
+        </div>
+
+        <div class="options">
+            <label>
+                <input type="checkbox" name="remember">
+                <span>Remember me</span>
+            </label>
+        </div>
+
+        <input type="submit" class="action-btn" value="Log In →">
+    </form>
+
+    <div class="footer-sign">
+        Don’t have an account? <a href="{% url 'register' %}">Register</a>
+        <span style="display: block; font-size:0.90rem; margin-top: 5px; color:#a0aec0">
+            <a href="{% url 'forgot_password' %}">Forgot password?</a>
+        </span>
+    </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,816 @@
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel · QuickBasket · clean white + blue click</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'seller/css/index.css' %}">
+    <script src="{% static 'seller/js/index.js' %}" defer></script>
+</head>
+<body>
+    <div class="container">
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <i class="fas fa-store"></i>
+                <h2>QuickBasket</h2>
+                <p>Seller Panel</p>
+            </div>
+
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <div class="nav-link active" onclick="showSection('dashboard')">
+                        <i class="fas fa-home"></i> Dashboard
+                    </div>
+                </li>
+
+                <li class="nav-item">
+                    <div class="nav-link" onclick="toggleSubmenu()">
+                        <i class="fas fa-box"></i> Products
+                        <i class="fas fa-chevron-down" style="margin-left: auto; font-size: 0.8rem;"></i>
+                    </div>
+                    <ul class="submenu" id="productsSubmenu">
+                        <li class="submenu-item">
+                            <div class="submenu-link" onclick="showSection('addProduct')">
+                                <i class="fas fa-plus-circle"></i> Add Product
+                            </div>
+                        </li>
+                        <li class="submenu-item">
+                            <div class="submenu-link" onclick="window.location.href='/seller/view_product/'">
+                                <i class="fas fa-eye"></i> View Products
+                            </div>
+                        </li>
+                    </ul>
+                </li>
+
+                <li class="nav-item">
+                    <div class="nav-link" onclick="showSection('categories')">
+                        <i class="fas fa-tags"></i> Categories
+                    </div>
+                </li>
+                <li class="nav-item">
+                    <div class="nav-link" onclick="showSection('orders')">
+                        <i class="fas fa-shopping-cart"></i> Orders
+                    </div>
+                </li>
+                <li class="nav-item">
+                    <div class="nav-link" onclick="showSection('users')">
+                        <i class="fas fa-users"></i> Users
+                    </div>
+                </li>
+                <li class="nav-item">
+                    <div class="nav-link" onclick="showSection('payments')">
+                        <i class="fas fa-credit-card"></i> Payments
+                    </div>
+                </li>
+                <li class="nav-item">
+                    <div class="nav-link" onclick="showSection('settings')">
+                        <i class="fas fa-cog"></i> Settings
+                    </div>
+                </li>
+            </ul>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="main-content">
+            <!-- Top Bar -->
+            <div class="top-bar">
+                <div class="search-bar">
+                    <i class="fas fa-search" style="color: #2563eb;"></i>
+                    <input type="text" placeholder="Search...">
+                </div>
+
+                <div class="admin-info">
+                    <div class="notification">
+                        <i class="fas fa-bell"></i>
+                        <span>3</span>
+                    </div>
+
+                    <button class="logout-btn">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <a href="{% url 'logout' %}"><h4>Logout</h4></a>
+                    </button>
+
+                    <div class="admin-profile" onclick="showAdminProfile()">
+                        <div class="admin-avatar">
+                            {% if sid.pic %}
+                                <img src="{{ sid.pic.url }}" style="width:100%; height:100%; object-fit:cover;">
+                            {% else %}
+                                <i class="fas fa-user"></i>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <p style="font-weight: 600;">{{sid.firstname}} {{sid.lastname}}</p>
+                            <p style="font-size: 0.8rem;">{{ uid.email }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DASHBOARD SECTION -->
+            <div id="dashboard-section" class="content-section {% if not show_products %}active{% endif %}">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-box"></i></div>
+                        <div class="stat-info">
+                            <h3 id="totalProducts">0</h3>
+                            <p>Total Products</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-tags"></i></div>
+                        <div class="stat-info">
+                            <h3 id="totalCategories">4</h3>
+                            <p>Categories</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-shopping-cart"></i></div>
+                        <div class="stat-info">
+                            <h3>1,234</h3>
+                            <p>Total Orders</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-users"></i></div>
+                        <div class="stat-info">
+                            <h3>892</h3>
+                            <p>Total Users</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-container" style="margin-bottom: 30px;">
+                    <div class="form-title">
+                        <h3>Recent Orders</h3>
+                    </div>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Order ID</th>
+                                    <th>Customer</th>
+                                    <th>Date</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>#ORD001</td><td>John Doe</td><td>2024-01-15</td><td>₹1,234</td><td><span class="status-badge status-delivered">Delivered</span></td></tr>
+                                <tr><td>#ORD002</td><td>Jane Smith</td><td>2024-01-16</td><td>₹2,345</td><td><span class="status-badge status-processing">Processing</span></td></tr>
+                                <tr><td>#ORD003</td><td>Bob Wilson</td><td>2024-01-17</td><td>₹58</td><td><span class="status-badge status-pending">Pending</span></td></tr>
+                                <tr><td>#ORD004</td><td>Alice Brown</td><td>2024-01-18</td><td>₹120</td><td><span class="status-badge status-delivered">Delivered</span></td></tr>
+                                <tr><td>#ORD005</td><td>Charlie Davis</td><td>2024-01-19</td><td>₹399</td><td><span class="status-badge status-processing">Processing</span></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="form-container">
+                    <div class="form-title">
+                        <h3>Recent Users</h3>
+                    </div>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>User ID</th>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>1</td><td>John Doe</td><td>john@email.com</td><td><span class="user-role">User</span></td><td><span class="status-badge status-active">Active</span></td></tr>
+                                <tr><td>2</td><td>Jane Smith</td><td>jane@email.com</td><td><span class="user-role">Manager</span></td><td><span class="status-badge status-active">Active</span></td></tr>
+                                <tr><td>3</td><td>Bob Wilson</td><td>bob@email.com</td><td><span class="user-role">User</span></td><td><span class="status-badge status-inactive">Inactive</span></td></tr>
+                                <tr><td>4</td><td>Alice Brown</td><td>alice@email.com</td><td><span class="user-role">Admin</span></td><td><span class="status-badge status-active">Active</span></td></tr>
+                                <tr><td>5</td><td>Charlie Davis</td><td>charlie@email.com</td><td><span class="user-role">User</span></td><td><span class="status-badge status-active">Active</span></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ADD PRODUCT SECTION -->
+            <div id="addProduct-section" class="content-section">
+                <div class="form-container">
+                    <div class="form-title">
+                        <h2><i class="fas fa-plus-circle" style="color: #2563eb;"></i> Add New Product</h2>
+                    </div>
+
+                    <form action="{% url 'add_product' %}" method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label><i class="fas fa-tag" style="color:#2563eb;"></i> Product Name </label>
+                                <input type="text" id="productName" name="product_name" placeholder="Enter product name" required>
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fas fa-layer-group" style="color:#2563eb;"></i> Category *</label>
+                                <select id="productCategory" name="product_category" required>
+                                    <option value="">Select Category</option>
+                                    <option value="Dairy">🥛 Dairy</option>
+                                    <option value="Vegetables">🥬 Vegetables</option>
+                                    <option value="Fruits">🍎 Fruits</option>
+                                    <option value="Grocery">🛒 Grocery</option>
+                                    <option value="Bakery">🥖 Bakery</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fas fa-rupee-sign" style="color:#2563eb;"></i> Price (₹) *</label>
+                                <input type="number" id="productPrice" name="product_price" placeholder="Enter price" required>
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fas fa-boxes" style="color:#2563eb;"></i> Stock Quantity </label>
+                                <input type="number" id="productStock" name="stock_qty" placeholder="Enter Quantity" required>
+                            </div>
+                            <div class="form-group full-width">
+                                <label><i class="fas fa-image" style="color:#2563eb;"></i> Image URL </label>
+                                <input type="file" id="productImage" name="picture" required onchange="updateImagePreview(this.value)">
+                            </div>
+                            <div class="form-group full-width">
+                                <label><i class="fas fa-align-left" style="color:#2563eb;"></i> Description</label>
+                                <textarea id="productShortDesc" rows="2" name="description" placeholder="Enter description"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fas fa-percent" style="color:#2563eb;"></i> Discount (%)</label>
+                                <input type="number" id="productDiscount" name="discount" placeholder="Enter product discount">
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fas fa-star" style="color:#2563eb;"></i> Badge Text</label>
+                                <input type="text" id="productBadge" name="budge_text" placeholder="Enter budge text">
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fas fa-weight" style="color:#2563eb;"></i> Weight/Unit</label>
+                                <input type="text" id="productWeight" name="weight_unit" placeholder="Enter weight">
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fas fa-tag" style="color:#2563eb;"></i> Brand</label>
+                                <input type="text" id="productBrand" name="brand" placeholder="Enter brand">
+                            </div>
+                        </div>
+                        <input type="submit" class="submit-btn" value=" Save Product">
+                    </form>
+                </div>
+            </div>
+
+            <!-- VIEW PRODUCTS SECTION -->
+            <div id="viewProducts-section" class="content-section {% if show_products %}active{% endif %}">
+                <div class="form-container">
+                    <div class="form-title">
+                        <h2><i class="fas fa-eye" style="color: #2563eb;"></i> All Products</h2>
+                    </div>
+                    <div class="search-products">
+                        <input type="text" id="searchInput" placeholder="Search products..." onkeyup="filterProducts()">
+                        <select id="categoryFilter" onchange="filterProducts()">
+                            <option value="all">All Categories</option>
+                            <option value="Dairy">🥛 Dairy</option>
+                            <option value="Vegetables">🥬 Vegetables</option>
+                            <option value="Fruits">🍎 Fruits</option>
+                            <option value="Grocery">🛒 Grocery</option>
+                            <option value="Bakery">🥖 Bakery</option>
+                        </select>
+                    </div>
+                    <div id="productsGrid" class="products-grid">
+                        {% for p in pid %}
+                            <div class="product-card" data-category="{{ p.product_category }}" onclick="showProductDetail('{{ p.id }}', '{{ p.product_name }}', '{{ p.product_category }}', '{{ p.product_price }}', '{{ p.stock_qty }}', '{{ p.weight_unit }}', '{{ p.discount }}', '{{ p.brand }}', '{{ p.description }}', '{{ p.picture.url }}')">
+                                <img src="{{ p.picture.url }}" alt="{{ p.product_name }}" style="width:100%; height:200px; object-fit:cover;">
+                                <div class="product-info">
+                                    <h3>{{ p.product_name }}</h3>
+                                    <p style="color:#2563eb; font-size:0.85rem; font-weight:600; text-transform:uppercase; margin-bottom:6px;">{{ p.product_category }}</p>
+                                    <p style="font-size:1.3rem; font-weight:800; color:#2563eb; margin-bottom:4px;">₹{{ p.product_price }}</p>
+                                    <p style="color:#64748b; font-size:0.85rem; margin-bottom:14px;">Stock: {{ p.stock_qty }} units</p>
+                                    <button class="action-btn view-btn" style="width:100%; padding:10px; border-radius:30px;">
+                                        <i class="fas fa-eye"></i> View Details
+                                    </button>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- PRODUCT DETAILS SECTION -->
+            <div id="productDetails-section" class="content-section">
+                <div id="productDetailsContainer"></div>
+            </div>
+
+            <!-- ✅ EDIT SINGLE PRODUCT SECTION — FIXED (no for loop, action JS se set hoga) -->
+            <div id="editSingleProduct-section" class="content-section">
+                <div style="background: white; border-radius: 20px; padding: 40px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); border: 1px solid #eef2f6; width: 100%;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; padding-bottom: 20px; border-bottom: 2px solid #f1f5f9;">
+                        <h2 style="font-size: 1.8rem; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 12px;">
+                            <i class="fas fa-edit" style="color: #2563eb;"></i> Edit Product
+                        </h2>
+                        <button onclick="goBackToViewProducts()" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; padding: 12px 24px; border-radius: 40px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.95rem; font-weight: 600; box-shadow: 0 4px 12px rgba(102,126,234,0.4);">
+                            <i class="fas fa-arrow-left"></i> Back to Products
+                        </button>
+                    </div>
+
+                    <!-- ✅ action="" — JS se dynamically set hoga -->
+                    <form id="editProductForm" action="" method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <input type="hidden" name="product_id" id="edit_p_id">
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 30px; margin-bottom: 28px;">
+                            <div>
+                                <label style="display: block; font-weight: 600; color: #1e293b; font-size: 1rem; margin-bottom: 10px;"><i class="fas fa-tag" style="color:#2563eb;"></i> Product Name</label>
+                                <input type="text" name="product_name" id="edit_p_name" style="width: 100%; padding: 14px 18px; border: 1.5px solid #e2e8f0; border-radius: 14px; font-size: 1rem; color: #1e293b; background: #fff; outline: none;">
+                            </div>
+                            <div>
+                                <label style="display: block; font-weight: 600; color: #1e293b; font-size: 1rem; margin-bottom: 10px;"><i class="fas fa-layer-group" style="color:#2563eb;"></i> Category</label>
+                                <select name="product_category" id="edit_p_category" style="width: 100%; padding: 14px 18px; border: 1.5px solid #e2e8f0; border-radius: 14px; font-size: 1rem; color: #1e293b; background: #fff; outline: none;">
+                                    <option value="Dairy">🥛 Dairy</option>
+                                    <option value="Vegetables">🥬 Vegetables</option>
+                                    <option value="Fruits">🍎 Fruits</option>
+                                    <option value="Grocery">🛒 Grocery</option>
+                                    <option value="Bakery">🥖 Bakery</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="display: block; font-weight: 600; color: #1e293b; font-size: 1rem; margin-bottom: 10px;"><i class="fas fa-rupee-sign" style="color:#2563eb;"></i> Price (₹)</label>
+                                <input type="number" name="product_price" id="edit_p_price" style="width: 100%; padding: 14px 18px; border: 1.5px solid #e2e8f0; border-radius: 14px; font-size: 1rem; color: #1e293b; background: #fff; outline: none;">
+                            </div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 30px; margin-bottom: 28px;">
+                            <div>
+                                <label style="display: block; font-weight: 600; color: #1e293b; font-size: 1rem; margin-bottom: 10px;"><i class="fas fa-boxes" style="color:#2563eb;"></i> Stock</label>
+                                <input type="number" name="stock_qty" id="edit_p_stock" style="width: 100%; padding: 14px 18px; border: 1.5px solid #e2e8f0; border-radius: 14px; font-size: 1rem; color: #1e293b; background: #fff; outline: none;">
+                            </div>
+                            <div>
+                                <label style="display: block; font-weight: 600; color: #1e293b; font-size: 1rem; margin-bottom: 10px;"><i class="fas fa-weight" style="color:#2563eb;"></i> Weight/Unit</label>
+                                <input type="text" name="weight_unit" id="edit_p_weight" style="width: 100%; padding: 14px 18px; border: 1.5px solid #e2e8f0; border-radius: 14px; font-size: 1rem; color: #1e293b; background: #fff; outline: none;">
+                            </div>
+                            <div>
+                                <label style="display: block; font-weight: 600; color: #1e293b; font-size: 1rem; margin-bottom: 10px;"><i class="fas fa-percent" style="color:#2563eb;"></i> Discount (%)</label>
+                                <input type="number" name="discount" id="edit_p_discount" style="width: 100%; padding: 14px 18px; border: 1.5px solid #e2e8f0; border-radius: 14px; font-size: 1rem; color: #1e293b; background: #fff; outline: none;">
+                            </div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 28px;">
+                            <div>
+                                <label style="display: block; font-weight: 600; color: #1e293b; font-size: 1rem; margin-bottom: 10px;"><i class="fas fa-tag" style="color:#2563eb;"></i> Brand</label>
+                                <input type="text" name="brand" id="edit_p_brand" style="width: 100%; padding: 14px 18px; border: 1.5px solid #e2e8f0; border-radius: 14px; font-size: 1rem; color: #1e293b; background: #fff; outline: none;">
+                            </div>
+                            <div>
+                                <label style="display: block; font-weight: 600; color: #1e293b; font-size: 1rem; margin-bottom: 10px;"><i class="fas fa-star" style="color:#2563eb;"></i> Badge Text</label>
+                                <input type="text" name="budge_text" id="edit_p_badge" style="width: 100%; padding: 14px 18px; border: 1.5px solid #e2e8f0; border-radius: 14px; font-size: 1rem; color: #1e293b; background: #fff; outline: none;">
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom: 28px;">
+                            <label style="display: block; font-weight: 600; color: #1e293b; font-size: 1rem; margin-bottom: 10px;"><i class="fas fa-align-left" style="color:#2563eb;"></i> Description</label>
+                            <textarea name="description" id="edit_p_description" rows="4" style="width: 100%; padding: 14px 18px; border: 1.5px solid #e2e8f0; border-radius: 14px; font-size: 1rem; color: #1e293b; background: #fff; outline: none;"></textarea>
+                        </div>
+
+                        <div style="margin-bottom: 36px;">
+                            <label style="display: block; font-weight: 600; color: #1e293b; font-size: 1rem; margin-bottom: 10px;"><i class="fas fa-image" style="color:#2563eb;"></i> Change Product Picture</label>
+                            <input type="file" name="picture" style="width: 50%; padding: 12px 18px; border: 1.5px solid #e2e8f0; border-radius: 14px; font-size: 1rem; color: #475569; background: #fff; outline: none;">
+                        </div>
+
+                        <button type="submit" style="width: 100%; padding: 18px; background: #2563eb; color: white; border: none; border-radius: 50px; font-size: 1.1rem; font-weight: 700; cursor: pointer; letter-spacing: 0.5px; box-shadow: 0 8px 20px rgba(37,99,235,0.3);">
+                            Update Product Information
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- DELETE CONFIRMATION SECTION -->
+            <div id="deleteConfirm-section" class="content-section">
+                <div style="width: 100%; max-width: 800px; margin: 40px auto; background: white; border-radius: 28px; padding: 60px 40px; box-shadow: 0 4px 25px rgba(0,0,0,0.08); border: 1px solid #eef2f6; text-align: center;">
+                    <div style="width: 100px; height: 100px; background: #fff1f2; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 30px; border: 2px solid #fecdd3;">
+                        <i class="fas fa-trash-alt" style="font-size: 2.5rem; color: #e11d48;"></i>
+                    </div>
+                    <div id="delete_p_img_container" style="width: 180px; height: 180px; border-radius: 20px; overflow: hidden; margin: 0 auto 25px; box-shadow: 0 8px 20px rgba(0,0,0,0.15);">
+                        <img id="delete_p_img" src="" style="width: 100%; height: 100%; object-fit: cover;">
+                    </div>
+                    <h2 style="font-size: 2rem; font-weight: 800; color: #1e293b; margin-bottom: 12px;" id="delete_p_name">Product Name</h2>
+                    <p style="color: #64748b; margin-bottom: 45px; font-size: 1.1rem; line-height: 1.6;">Are you sure you want to delete this product? <br><span style="color: #ef4444; font-weight: 600;">This action cannot be undone.</span></p>
+                    <form id="deleteProductForm" action="#" method="post" style="display: flex; gap: 20px; justify-content: center;">
+                        {% csrf_token %}
+                        <input type="hidden" name="product_id" id="delete_p_id">
+                        <button type="button" onclick="goBackToViewProducts()" style="flex: 1; max-width: 250px; background: white; color: #1e293b; border: 2px solid #e2e8f0; padding: 18px; border-radius: 16px; font-weight: 700; font-size: 1rem; cursor: pointer;">
+                            No, Keep it
+                        </button>
+                        <button type="submit" style="flex: 1; max-width: 250px; background: #e11d48; color: white; border: none; padding: 18px; border-radius: 16px; font-weight: 700; font-size: 1rem; cursor: pointer; box-shadow: 0 8px 20px rgba(225,29,72,0.3);">
+                            Yes, Delete Product
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- EDIT PRODUCTS SECTION -->
+            <div id="editProducts-section" class="content-section">
+                <div class="form-container">
+                    <div class="form-title">
+                        <h2><i class="fas fa-edit" style="color: #2563eb;"></i> Edit Products</h2>
+                        <p>Click on any product to edit</p>
+                    </div>
+                    <div class="search-products">
+                        <input type="text" id="editSearchInput" placeholder="Search products to edit..." onkeyup="filterEditProducts()">
+                        <select id="editCategoryFilter" onchange="filterEditProducts()">
+                            <option value="all">All Categories</option>
+                            <option value="Dairy">🥛 Dairy</option>
+                            <option value="Vegetables">🥬 Vegetables</option>
+                            <option value="Fruits">🍎 Fruits</option>
+                            <option value="Grocery">🛒 Grocery</option>
+                            <option value="Bakery">🥖 Bakery</option>
+                        </select>
+                    </div>
+                    <div id="editProductsGrid" class="products-grid"></div>
+                </div>
+            </div>
+
+            <!-- DELETE PRODUCTS SECTION -->
+            <div id="deleteProducts-section" class="content-section">
+                <div class="form-container">
+                    <div class="form-title">
+                        <h2><i class="fas fa-trash-alt" style="color: #ef4444;"></i> Delete Products</h2>
+                        <p>Click on delete button to remove products</p>
+                    </div>
+                    <div class="search-products">
+                        <input type="text" id="deleteSearchInput" placeholder="Search products to delete..." onkeyup="filterDeleteProducts()">
+                        <select id="deleteCategoryFilter" onchange="filterDeleteProducts()">
+                            <option value="all">All Categories</option>
+                            <option value="Dairy">🥛 Dairy</option>
+                            <option value="Vegetables">🥬 Vegetables</option>
+                            <option value="Fruits">🍎 Fruits</option>
+                            <option value="Grocery">🛒 Grocery</option>
+                            <option value="Bakery">🥖 Bakery</option>
+                        </select>
+                    </div>
+                    <div id="deleteProductsGrid" class="products-grid"></div>
+                </div>
+            </div>
+
+            <!-- CATEGORIES SECTION -->
+            <div id="categories-section" class="content-section">
+                <div class="form-container">
+                    <div class="form-title">
+                        <h2><i class="fas fa-tags" style="color: #2563eb;"></i> Categories Management</h2>
+                        <button class="submit-btn" style="width: auto; padding: 10px 24px;" onclick="addNewCategory()">Add Category</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Category Name</th>
+                                    <th>Products Count</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="categoriesTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ADD CATEGORY SECTION -->
+            <div id="addCategory-section" class="content-section">
+                <div style="background: white; border-radius: 20px; padding: 40px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); border: 1px solid #eef2f6; width: 100%;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; padding-bottom: 20px; border-bottom: 2px solid #f1f5f9;">
+                        <h2 style="font-size: 1.8rem; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 12px;">
+                            <i class="fas fa-plus-circle" style="color: #2563eb;"></i> Add New Category
+                        </h2>
+                        <button onclick="goBackToCategories()" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; padding: 12px 24px; border-radius: 40px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.95rem; font-weight: 600; box-shadow: 0 4px 12px rgba(102,126,234,0.4);">
+                            <i class="fas fa-arrow-left"></i> Back to Categories
+                        </button>
+                    </div>
+
+                    <form id="addCategoryForm" onsubmit="submitNewCategory(event)">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 28px;">
+                            <div>
+                                <label style="display: block; font-weight: 600; color: #1e293b; font-size: 1rem; margin-bottom: 10px;"><i class="fas fa-tag" style="color:#2563eb;"></i> Category Name*</label>
+                                <input type="text" id="add_c_name" required placeholder="Enter category name" style="width: 100%; padding: 14px 18px; border: 1.5px solid #e2e8f0; border-radius: 14px; font-size: 1rem; color: #1e293b; background: #fff; outline: none;">
+                            </div>
+                            <div>
+                                <label style="display: block; font-weight: 600; color: #1e293b; font-size: 1rem; margin-bottom: 10px;"><i class="fas fa-layer-group" style="color:#2563eb;"></i> Category Type</label>
+                                <select id="add_c_type" style="width: 100%; padding: 14px 18px; border: 1.5px solid #e2e8f0; border-radius: 14px; font-size: 1rem; color: #1e293b; background: #fff; outline: none;">
+                                    <option value="Food">Food</option>
+                                    <option value="Beverage">Beverage</option>
+                                    <option value="Household">Household</option>
+                                    <option value="Personal Care">Personal Care</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom: 36px;">
+                            <label style="display: block; font-weight: 600; color: #1e293b; font-size: 1rem; margin-bottom: 10px;"><i class="fas fa-align-left" style="color:#2563eb;"></i> Description</label>
+                            <textarea id="add_c_description" rows="4" placeholder="Enter category description" style="width: 100%; padding: 14px 18px; border: 1.5px solid #e2e8f0; border-radius: 14px; font-size: 1rem; color: #1e293b; background: #fff; outline: none;"></textarea>
+                        </div>
+
+                        <button type="submit" style="width: 100%; padding: 18px; background: #2563eb; color: white; border: none; border-radius: 50px; font-size: 1.1rem; font-weight: 700; cursor: pointer; letter-spacing: 0.5px; box-shadow: 0 8px 20px rgba(37,99,235,0.3);">
+                            Save Category
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- EDIT CATEGORY SECTION -->
+            <div id="editCategory-section" class="content-section">
+                <div style="background: white; border-radius: 20px; padding: 40px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); border: 1px solid #eef2f6; width: 100%;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; padding-bottom: 20px; border-bottom: 2px solid #f1f5f9;">
+                        <h2 style="font-size: 1.8rem; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 12px;">
+                            <i class="fas fa-edit" style="color: #2563eb;"></i> Edit Category
+                        </h2>
+                        <button onclick="goBackToCategories()" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; padding: 12px 24px; border-radius: 40px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.95rem; font-weight: 600; box-shadow: 0 4px 12px rgba(102,126,234,0.4);">
+                            <i class="fas fa-arrow-left"></i> Back to Categories
+                        </button>
+                    </div>
+
+                    <form id="editCategoryForm" onsubmit="submitEditCategory(event)">
+                        <input type="hidden" id="edit_c_id">
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 28px;">
+                            <div>
+                                <label style="display: block; font-weight: 600; color: #1e293b; font-size: 1rem; margin-bottom: 10px;"><i class="fas fa-tag" style="color:#2563eb;"></i> Category Name*</label>
+                                <input type="text" id="edit_c_name" required style="width: 100%; padding: 14px 18px; border: 1.5px solid #e2e8f0; border-radius: 14px; font-size: 1rem; color: #1e293b; background: #fff; outline: none;">
+                            </div>
+                            <div>
+                                <label style="display: block; font-weight: 600; color: #1e293b; font-size: 1rem; margin-bottom: 10px;"><i class="fas fa-layer-group" style="color:#2563eb;"></i> Category Type</label>
+                                <select id="edit_c_type" style="width: 100%; padding: 14px 18px; border: 1.5px solid #e2e8f0; border-radius: 14px; font-size: 1rem; color: #1e293b; background: #fff; outline: none;">
+                                    <option value="Food">Food</option>
+                                    <option value="Beverage">Beverage</option>
+                                    <option value="Household">Household</option>
+                                    <option value="Personal Care">Personal Care</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom: 36px;">
+                            <label style="display: block; font-weight: 600; color: #1e293b; font-size: 1rem; margin-bottom: 10px;"><i class="fas fa-align-left" style="color:#2563eb;"></i> Description</label>
+                            <textarea id="edit_c_description" rows="4" style="width: 100%; padding: 14px 18px; border: 1.5px solid #e2e8f0; border-radius: 14px; font-size: 1rem; color: #1e293b; background: #fff; outline: none;"></textarea>
+                        </div>
+
+                        <button type="submit" style="width: 100%; padding: 18px; background: #2563eb; color: white; border: none; border-radius: 50px; font-size: 1.1rem; font-weight: 700; cursor: pointer; letter-spacing: 0.5px; box-shadow: 0 8px 20px rgba(37,99,235,0.3);">
+                            Update Category
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- DELETE CATEGORY CONFIRMATION SECTION -->
+            <div id="deleteCategoryConfirm-section" class="content-section">
+                <div style="width: 100%; max-width: 800px; margin: 40px auto; background: white; border-radius: 28px; padding: 60px 40px; box-shadow: 0 4px 25px rgba(0,0,0,0.08); border: 1px solid #eef2f6; text-align: center;">
+                    <div style="width: 100px; height: 100px; background: #fff1f2; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 30px; border: 2px solid #fecdd3;">
+                        <i class="fas fa-trash-alt" style="font-size: 2.5rem; color: #e11d48;"></i>
+                    </div>
+                    <h2 style="font-size: 2rem; font-weight: 800; color: #1e293b; margin-bottom: 12px;" id="delete_c_name">Category Name</h2>
+                    <p style="color: #64748b; margin-bottom: 45px; font-size: 1.1rem; line-height: 1.6;">Are you sure you want to delete this category? <br><span style="color: #ef4444; font-weight: 600;">This action cannot be undone.</span></p>
+                    <div style="display: flex; gap: 20px; justify-content: center;">
+                        <input type="hidden" id="delete_c_id">
+                        <button type="button" onclick="goBackToCategories()" style="flex: 1; max-width: 250px; background: white; color: #1e293b; border: 2px solid #e2e8f0; padding: 18px; border-radius: 16px; font-weight: 700; font-size: 1rem; cursor: pointer;">
+                            No, Keep it
+                        </button>
+                        <button type="button" onclick="confirmDeleteCategory()" style="flex: 1; max-width: 250px; background: #e11d48; color: white; border: none; padding: 18px; border-radius: 16px; font-weight: 700; font-size: 1rem; cursor: pointer; box-shadow: 0 8px 20px rgba(225,29,72,0.3);">
+                            Yes, Delete Category
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ORDERS SECTION -->
+            <div id="orders-section" class="content-section">
+                <div class="form-container">
+                    <div class="form-title">
+                        <h2><i class="fas fa-shopping-cart" style="color: #2563eb;"></i> Orders Management</h2>
+                        <select onchange="filterOrders()" style="padding: 10px; border-radius: 40px; border: 2px solid #e2e8f0;">
+                            <option value="all">All Orders</option>
+                            <option value="pending">Pending</option>
+                            <option value="processing">Processing</option>
+                            <option value="delivered">Delivered</option>
+                        </select>
+                    </div>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Order ID</th>
+                                    <th>Customer</th>
+                                    <th>Date</th>
+                                    <th>Items</th>
+                                    <th>Total</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ordersTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- USERS SECTION -->
+            <div id="users-section" class="content-section">
+                <div class="form-container">
+                    <div class="form-title">
+                        <h2><i class="fas fa-users" style="color: #2563eb;"></i> Users Management</h2>
+                        <input type="text" placeholder="Search users..." style="padding: 10px 18px; border-radius: 40px; border: 2px solid #e2e8f0;" onkeyup="searchUsers(this.value)">
+                    </div>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>User ID</th>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Phone</th>
+                                    <th>Role</th>
+                                    <th>Status</th>
+                                    <th>Joined</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PAYMENTS SECTION -->
+            <div id="payments-section" class="content-section">
+                <div class="form-container">
+                    <div class="form-title">
+                        <h2><i class="fas fa-credit-card" style="color: #2563eb;"></i> Payments Management</h2>
+                    </div>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Payment ID</th>
+                                    <th>Order ID</th>
+                                    <th>Customer</th>
+                                    <th>Amount</th>
+                                    <th>Method</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="paymentsTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SETTINGS SECTION -->
+            <div id="settings-section" class="content-section">
+                <div class="form-container">
+                    <div class="form-title">
+                        <h2><i class="fas fa-cog" style="color: #2563eb;"></i> Settings</h2>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+                        <div>
+                            <h3>General Settings</h3>
+                            <div class="form-group">
+                                <label>Store Name</label>
+                                <input type="text" value="QuickBasket" placeholder="Store name">
+                            </div>
+                            <div class="form-group">
+                                <label>Store Email</label>
+                                <input type="email" value="admin@quickbasket.com" placeholder="Store email">
+                            </div>
+                            <div class="form-group">
+                                <label>Store Phone</label>
+                                <input type="text" value="+91 98765 43210" placeholder="Store phone">
+                            </div>
+                            <div class="form-group">
+                                <label>Delivery Time</label>
+                                <input type="text" value="10-15 minutes" placeholder="Delivery time">
+                            </div>
+                        </div>
+                        <div>
+                            <h3>Payment Settings</h3>
+                            <div class="form-group">
+                                <label>UPI ID</label>
+                                <input type="text" value="quickbasket@okhdfcbank" placeholder="UPI ID">
+                            </div>
+                            <div class="form-group">
+                                <label>Bank Account</label>
+                                <input type="text" value="1234567890" placeholder="Account number">
+                            </div>
+                            <div class="form-group">
+                                <label>IFSC Code</label>
+                                <input type="text" value="HDFC0001234" placeholder="IFSC code">
+                            </div>
+                        </div>
+                    </div>
+                    <button class="submit-btn" style="margin-top: 20px;">Save Settings</button>
+                </div>
+            </div>
+
+            <!-- ADMIN PROFILE FULL PAGE SECTION -->
+            <div id="adminProfile-section" class="content-section">
+                <div class="form-container">
+                    <div class="form-title" style="display: flex; justify-content: space-between; align-items: center;">
+                        <h2><i class="fas fa-user" style="color: #2563eb;"></i> Admin Profile</h2>
+                        <button onclick="showSection('dashboard')" style="background: #2563eb; color: white; border: none; padding: 10px 20px; border-radius: 40px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.95rem; font-weight: 600;">
+                            <i class="fas fa-arrow-left"></i> Back to Dashboard
+                        </button>
+                    </div>
+                    <div class="profile-info" style="padding: 30px 0;">
+                        <div class="profile-avatar" style="border-radius: 50%; overflow: hidden;">
+                            {% if sid.pic %}
+                                <img src="{{ sid.pic.url }}" style="width:100%; height:100%; object-fit:cover; border-radius: 50%;">
+                            {% else %}
+                                <img src="/media/images/seller_default.png" style="width:100%; height:100%; object-fit:cover; border-radius: 50%;">
+                            {% endif %}
+                        </div>
+                        <h2 style="margin-top: 18px; font-size: 1.8rem; color: #1e293b;">Seller</h2>
+                        <p style="color: #2563eb; margin-top: 6px; font-size: 1rem; font-weight: 500;">Account Details</p>
+                        <div class="profile-details" style="max-width: 600px; width: 100%; margin-top: 25px;">
+                            <p><strong>Full Name:</strong> {{sid.firstname}} {{sid.lastname}}</p>
+                            <p><strong>Email:</strong> {{uid.email}}</p>
+                            <p><strong>Phone:</strong> {{sid.contactno}}</p>
+                            <p><strong>Role:</strong> Super Administrator - Seller Account</p>
+                            <p><strong>Status:</strong> <span class="status-badge status-active">Active</span></p>
+                            <p><strong>Joined:</strong> {{uid.created_at}}</p>
+                        </div>
+                        <button class="submit-btn" style="max-width: 280px; margin-top: 25px;" onclick="editAdminProfile()">
+                            <i class="fas fa-user-edit"></i> Edit Profile
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- EDIT PROFILE SECTION -->
+            <div id="editProfile-section" class="content-section">
+                <div style="background: white; border-radius: 20px; padding: 40px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); border: 1px solid #eef2f6;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; padding-bottom: 20px; border-bottom: 2px solid #f1f5f9;">
+                        <h2 style="font-size: 1.8rem; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 12px;">
+                            <i class="fas fa-user-edit" style="color: #2563eb;"></i> Edit Profile
+                        </h2>
+                        <button onclick="showAdminProfile()" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; padding: 12px 24px; border-radius: 40px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.95rem; font-weight: 600; box-shadow: 0 4px 12px rgba(102,126,234,0.4);">
+                            <i class="fas fa-arrow-left"></i> Back to Profile
+                        </button>
+                    </div>
+                    <form action="{% url 'update_profile' %}" method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 28px;">
+                            <div>
+                                <label style="display: block; font-weight: 600; color: #1e293b; font-size: 1rem; margin-bottom: 10px;">First Name</label>
+                                <input type="text" value="{{sid.firstname}}" name="firstname" style="width: 100%; padding: 14px 18px; border: 1.5px solid #e2e8f0; border-radius: 14px; font-size: 1rem; color: #1e293b; background: #fff; outline: none;">
+                            </div>
+                            <div>
+                                <label style="display: block; font-weight: 600; color: #1e293b; font-size: 1rem; margin-bottom: 10px;">Last Name</label>
+                                <input type="text" value="{{sid.lastname}}" name="lastname" style="width: 100%; padding: 14px 18px; border: 1.5px solid #e2e8f0; border-radius: 14px; font-size: 1rem; color: #1e293b; background: #fff; outline: none;">
+                            </div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 28px;">
+                            <div>
+                                <label style="display: block; font-weight: 600; color: #1e293b; font-size: 1rem; margin-bottom: 10px;">Email</label>
+                                <input type="email" value="{{uid.email}}" name="email" readonly style="width: 100%; padding: 14px 18px; border: 1.5px solid #e2e8f0; border-radius: 14px; font-size: 1rem; color: #94a3b8; background: #f8fafc; outline: none; cursor: not-allowed;">
+                            </div>
+                            <div>
+                                <label style="display: block; font-weight: 600; color: #1e293b; font-size: 1rem; margin-bottom: 10px;">Phone</label>
+                                <input type="tel" value="{{sid.contactno}}" name="contactno" style="width: 100%; padding: 14px 18px; border: 1.5px solid #e2e8f0; border-radius: 14px; font-size: 1rem; color: #1e293b; background: #fff; outline: none;">
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 28px;">
+                            <label style="display: block; font-weight: 600; color: #1e293b; font-size: 1rem; margin-bottom: 10px;">Seller store name</label>
+                            <input type="text" value="{{sid.seller_store_name}}" name="seller_store_name" placeholder="Enter seller store name" style="width: 100%; padding: 14px 18px; border: 1.5px solid #e2e8f0; border-radius: 14px; font-size: 1rem; color: #1e293b; background: #fff; outline: none;">
+                        </div>
+                        <div style="margin-bottom: 36px;">
+                            <label style="display: block; font-weight: 600; color: #1e293b; font-size: 1rem; margin-bottom: 10px;">Picture</label>
+                            <input type="file" name="pic" style="width: 50%; padding: 12px 18px; border: 1.5px solid #e2e8f0; border-radius: 14px; font-size: 1rem; color: #475569; background: #fff; outline: none;">
+                        </div>
+                        <input type="submit" value="Update Profile" style="width: 100%; padding: 18px; background: #2563eb; color: white; border: none; border-radius: 50px; font-size: 1.1rem; font-weight: 700; cursor: pointer; letter-spacing: 0.5px; box-shadow: 0 8px 20px rgba(37,99,235,0.3);">
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Product Detail Modal -->
+    <div id="productModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Product Details</h2>
+                <span class="close-modal" onclick="closeModal()">&times;</span>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
+        </div>
+    </div>
+
+    <!-- Edit Product Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Edit Product</h2>
+                <span class="close-modal" onclick="closeEditModal()">&times;</span>
+            </div>
+            <div class="modal-body" id="editModalBody"></div>
+        </div>
+    </div>
+
+</body>
+</html>
