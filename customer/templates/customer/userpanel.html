@@ -1,0 +1,659 @@
+{% load static %}
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuickBasket</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'customer/css/userpanel.css' %}">
+    <script src="{% static 'customer/js/userpanel.js' %}" defer></script>
+</head>
+
+<body>
+    <div class="bg-layer"></div>
+    <div class="blob b1"></div>
+    <div class="blob b2"></div>
+    <div class="blob b3"></div>
+    <div class="blob b4"></div>
+    <div class="blob b5"></div>
+    <div class="grain"></div>
+    <div id="toast">
+        <i class="fas fa-circle-check" style="color:#6ee7b7;"></i>
+        <span id="tmsg"></span>
+    </div>
+
+    <!-- HEADER -->
+    <header>
+        <div class="logo" onclick="nav('home')">
+            <div class="logo-icon">🛒</div>
+            <div>
+                <div class="logo-name">QuickBasket</div>
+                <div class="logo-tag">Fresh · Fast · Always</div>
+            </div>
+        </div>
+        <div class="hsearch">
+            <i class="fas fa-search"></i>
+            <input type="text" id="searchInput" placeholder="Search groceries, fruits, dairy..." autocomplete="off">
+            <div class="search-suggestions" id="searchSuggestions"></div>
+        </div>
+        <div class="hright">
+            <div class="dbadge">
+                <i class="fas fa-bolt"></i> 10 min delivery
+            </div>
+            <a href="{% url 'view_cart' %}" style="text-decoration: none;">
+                <button class="cart-btn" data-url="">
+                    <i class="fas fa-basket-shopping"></i> My Cart
+                    <span class="cbadge" id="cBadge" style="{% if not cart_count or cart_count == 0 %}display: none;{% endif %}">{{ cart_count|default:0 }}</span>
+                </button>
+            </a>
+            <div class="ubtn" onclick="toggleMenu(event)">
+                <div class="uav">
+                    <img src="{{ cid.pic.url }}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">
+                </div>
+                <span class="unm">{{cid.firstname}} {{cid.lastname}}</span>
+            </div>
+            <div class="profile-menu" id="profileMenu">
+                <div onclick="nav('profile')">👤 View Profile</div>
+                <a href="{% url 'logout' %}">🚪 Logout</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- ═══════════════ HOME PAGE ═══════════════ -->
+    <div id="page-home" class="page active">
+        <div class="wrap">
+
+            {% if q %}
+            <!-- Search Results Dedicated Page (Zepto High-Fidelity Mockup) -->
+            <div class="search-page-layout">
+                <!-- LEFT SIDEBAR FILTERS -->
+                <aside class="search-sidebar g1 s1">
+                    <!-- Quick Pills Section -->
+                    <div class="quick-filter-section">
+                        <div class="quick-pills">
+                            {% for b in brands|slice:":6" %}
+                                <button class="q-pill" onclick="toggleBrandFilter('{{ b }}', this)">
+                                    <i class="fas fa-tag"></i> {{ b }}
+                                </button>
+                            {% endfor %}
+                            <button class="q-pill active" onclick="clearAllFilters()">
+                                <i class="fas fa-times-circle"></i> Clear All
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- PRICE FILTER -->
+                    <div class="filter-group">
+                        <div class="filter-header" onclick="toggleFilterCollapse('price')">
+                            <span>PRICE</span>
+                            <i class="fas fa-chevron-down" id="price-arrow"></i>
+                        </div>
+                        <div class="filter-body" id="price-body">
+                            <div class="price-range-label">
+                                ₹<span id="price-min-display">{{ min_price }}</span> - ₹<span id="price-max-display">{{ max_price }}</span>
+                            </div>
+                            <div class="range-slider-container">
+                                <input type="range" id="priceRangeInput" min="{{ min_price }}" max="{{ max_price }}" value="{{ max_price }}" class="custom-range-slider" oninput="updatePriceFilter(this.value)">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- BRAND FILTER -->
+                    <div class="filter-group">
+                        <div class="filter-header" onclick="toggleFilterCollapse('brand')">
+                            <span>BRAND</span>
+                            <i class="fas fa-chevron-down" id="brand-arrow"></i>
+                        </div>
+                        <div class="filter-body" id="brand-body">
+                            <div class="brand-checkboxes">
+                                {% for b in brands %}
+                                    <label class="brand-checkbox-label">
+                                        <input type="checkbox" name="brand-filter" value="{{ b }}" onchange="filterProductsList()">
+                                        <span class="chk-lbl">{{ b }}</span>
+                                    </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </aside>
+
+                <!-- RIGHT PRODUCT GRID AREA -->
+                <main class="search-results-content">
+                    <div class="pgnav" style="margin-bottom:24px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px;">
+                        <div style="display:flex; align-items:center; gap:16px;">
+                            <a href="{% url 'view_product' %}" class="back-btn" style="text-decoration:none;">
+                                <i class="fas fa-arrow-left"></i> Back
+                            </a>
+                            <div class="pg-ttl" style="font-size:1.3rem;">Showing results for "<strong>{{ q }}</strong>"</div>
+                        </div>
+                        <div class="results-count" style="font-size:0.92rem; color:var(--mist); font-weight:600;"><span id="filtered-count">{{ pid|length }}</span> products found</div>
+                    </div>
+
+                    <div class="pgrid zepto-pgrid" id="pgrid">
+                        {% for p in pid %}
+                            <div class="pcd g1 s1 zepto-card"
+                                data-cat="{{ p.product_category|lower }}"
+                                data-name="{{ p.product_name }}"
+                                data-brand="{{ p.brand }}"
+                                data-price="{{ p.product_price }}"
+                                data-img="/media/{{ p.picture }}">
+
+                                <div class="pcd-img zepto-img-wrap">
+                                    <img loading="lazy" src="/media/{{ p.picture }}" alt="{{ p.product_name }}">
+                                    {% if p.budge_text %}
+                                        <span class="pcd-bdg zepto-bdg">{{ p.budge_text }}</span>
+                                    {% endif %}
+                                    
+                                    <!-- OVERLAID ADD TO CART BUTTON (Bottom-Right of Image) -->
+                                    <button class="zepto-add-btn">
+                                        <a href="{% url 'add_to_cart' pk=p.id %}" style="text-decoration:none; color:inherit;">
+                                            ADD <i class="fas fa-plus" style="font-size: 0.72rem; margin-left: 3px;"></i>
+                                        </a>
+                                    </button>
+                                </div>
+
+                                <div class="pcd-body zepto-body">
+                                    <!-- Price Line -->
+                                    <div class="zepto-price-line">
+                                        <span class="zepto-price-now">₹{{ p.product_price }}</span>
+                                        <span class="zepto-price-old">₹{{ p.product_price|add:35 }}</span>
+                                        <span class="zepto-price-off">₹35 OFF</span>
+                                    </div>
+
+                                    <!-- Product Name -->
+                                    <div class="zepto-name">{{ p.product_name }}</div>
+                                    
+                                    <!-- Weight & Unit -->
+                                    <div class="zepto-qty">1 pack ({{ p.weight_unit }})</div>
+                                    
+                                    <!-- Brand sub-tag / category -->
+                                    <div class="zepto-meta">
+                                        <span class="zepto-brand-tag">{{ p.brand }}</span>
+                                    </div>
+
+                                    <!-- Rating details -->
+                                    <div class="zepto-rating">
+                                        <i class="fas fa-star"></i> <span>4.7 (21.4k)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        {% empty %}
+                            <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; background: rgba(255, 255, 255, 0.45); backdrop-filter: blur(10px); border-radius: 24px; border: 1.5px solid rgba(255, 255, 255, 0.5); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03); max-width: 600px; margin: 40px auto;">
+                                <div style="font-size: 4rem; margin-bottom: 20px;">🔍</div>
+                                <h2 style="font-size: 1.8rem; font-weight: 700; color: #0f172a; margin-bottom: 10px;">No Products Found</h2>
+                                <p style="color: #64748b; font-size: 1rem; margin-bottom: 30px; font-weight: 500;">We couldn't find any products matching "{{ q }}". Try searching for something else!</p>
+                                <a href="{% url 'view_product' %}" style="text-decoration: none;">
+                                    <button class="chk-btn" style="width: auto; padding: 12px 32px; display: inline-flex; align-items: center; gap: 8px; margin: 0 auto;">
+                                        <i class="fas fa-arrow-left"></i> View All Products
+                                    </button>
+                                </a>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </main>
+            </div>
+            {% else %}
+            <!-- Normal Home Page Elements -->
+            <div class="carousel-wrap s2" style="margin-bottom:28px;">
+                <div class="carousel-track" id="cTrack">
+                    <div class="cslide">
+                        <div class="cslide-bg" style="background-image:url('https://images.unsplash.com/photo-1542838132-92c53300491e?w=1200&q=80');"></div>
+                        <div class="cslide-ov" style="background:linear-gradient(110deg,rgba(8,145,178,.88) 0%,rgba(6,182,212,.6) 40%,transparent 72%);"></div>
+                        <div class="cslide-cnt">
+                            <div class="cslide-tag"><i class="fas fa-bolt"></i> Welcome Offer</div>
+                            <h2>Get <em>Flat 30% OFF</em><br>on First Order!</h2>
+                            <p>Farm-fresh groceries, delivered to your door in just 10 minutes. Use code at checkout.</p>
+                            <button class="cslide-cta"><i class="fas fa-bag-shopping"></i> Shop Now · WELCOME30</button>
+                        </div>
+                        <div class="cslide-badge">
+                            <span class="bpct">30%</span>
+                            <span class="boff">OFF</span>
+                        </div>
+                    </div>
+                    <div class="cslide">
+                        <div class="cslide-bg" style="background-image:url('https://images.unsplash.com/photo-1557800636-894a64c1696f?w=1200&q=80');"></div>
+                        <div class="cslide-ov" style="background:linear-gradient(110deg,rgba(5,150,105,.88) 0%,rgba(16,185,129,.55) 42%,transparent 72%);"></div>
+                        <div class="cslide-cnt">
+                            <div class="cslide-tag"><i class="fas fa-lemon"></i> Summer Special</div>
+                            <h2>Fresh <em>Summer Fruits</em><br>at Best Prices!</h2>
+                            <p>Mangoes, litchi, watermelon &amp; more — straight from the farm to your table.</p>
+                            <button class="cslide-cta"><i class="fas fa-apple-whole"></i> Explore Fruits · FRUIT25</button>
+                        </div>
+                        <div class="cslide-badge" style="background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.4);">
+                            <span class="bpct">25%</span>
+                            <span class="boff">OFF</span>
+                        </div>
+                    </div>
+                    <div class="cslide">
+                        <div class="cslide-bg" style="background-image:url('https://images.unsplash.com/photo-1563636619-e9143da7973b?w=1200&q=80');"></div>
+                        <div class="cslide-ov" style="background:linear-gradient(110deg,rgba(124,58,237,.85) 0%,rgba(139,92,246,.55) 42%,transparent 72%);"></div>
+                        <div class="cslide-cnt">
+                            <div class="cslide-tag"><i class="fas fa-glass-water"></i> Dairy Week</div>
+                            <h2><em>Dairy Delight</em><br>30% Off All Week!</h2>
+                            <p>Milk, cheese, paneer, yogurt &amp; more from trusted farms. Stay healthy, save big.</p>
+                            <button class="cslide-cta"><i class="fas fa-droplet"></i> Shop Dairy · DAIRY30</button>
+                        </div>
+                        <div class="cslide-badge" style="background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.4);">
+                            <span class="bpct">30%</span>
+                            <span class="boff">OFF</span>
+                        </div>
+                    </div>
+                    <div class="cslide">
+                        <div class="cslide-bg" style="background-image:url('https://images.unsplash.com/photo-1509440159596-0249088772ff?w=1200&q=80');"></div>
+                        <div class="cslide-ov" style="background:linear-gradient(110deg,rgba(217,119,6,.88) 0%,rgba(245,158,11,.55) 42%,transparent 72%);"></div>
+                        <div class="cslide-cnt">
+                            <div class="cslide-tag"><i class="fas fa-bread-slice"></i> Bakery Fresh</div>
+                            <h2>Morning <em>Bakery Treats</em><br>Free Delivery!</h2>
+                            <p>Croissants, cakes, sourdough — baked fresh every single morning. Order before 9 AM.</p>
+                            <button class="cslide-cta"><i class="fas fa-truck-fast"></i> Order Bakery · FREEDEL</button>
+                        </div>
+                        <div class="cslide-badge" style="background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.4);">
+                            <span class="bpct">FREE</span>
+                            <span class="boff">DELIVERY</span>
+                        </div>
+                    </div>
+                    <div class="cslide">
+                        <div class="cslide-bg" style="background-image:url('https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=1200&q=80');"></div>
+                        <div class="cslide-ov" style="background:linear-gradient(110deg,rgba(15,118,110,.88) 0%,rgba(20,184,166,.55) 42%,transparent 72%);"></div>
+                        <div class="cslide-cnt">
+                            <div class="cslide-tag"><i class="fas fa-leaf"></i> Organic Week</div>
+                            <h2>Farm <em>Organic Veggies</em><br>Buy 2 Get 1 Free!</h2>
+                            <p>100% organic, zero pesticides. Directly sourced from certified farms near you.</p>
+                            <button class="cslide-cta"><i class="fas fa-seedling"></i> Shop Veggies · VEG212</button>
+                        </div>
+                        <div class="cslide-badge" style="background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.4);">
+                            <span class="bpct">B2G1</span>
+                            <span class="boff">FREE</span>
+                        </div>
+                    </div>
+                </div>
+                <button class="carousel-prev" id="cprev" onclick="cMove(-1)"><i class="fas fa-chevron-left"></i></button>
+                <button class="carousel-next" id="cnext" onclick="cMove(1)"><i class="fas fa-chevron-right"></i></button>
+                <div class="carousel-dots" id="cdots"></div>
+            </div>
+
+            <div class="sh" style="margin-bottom:14px;">
+                <div class="sh-t">Browse <em>Categories</em></div>
+            </div>
+            <div class="cpills">
+                <a href="#" class="cpill on" onclick="fcat(event,'all')"><span>🏠</span> All</a>
+                <a href="#" class="cpill" onclick="fcat(event,'dairy')"><span>🥛</span> Dairy</a>
+                <a href="#" class="cpill" onclick="fcat(event,'vegetables')"><span>🥬</span> Vegetables</a>
+                <a href="#" class="cpill" onclick="fcat(event,'fruits')"><span>🍎</span> Fruits</a>
+                <a href="#" class="cpill" onclick="fcat(event,'grocery')"><span>🛒</span> Grocery</a>
+                <a href="#" class="cpill" onclick="fcat(event,'bakery')"><span>🥖</span> Bakery</a>
+            </div>
+
+            <div class="sh" style="margin-bottom:16px;">
+                <div class="sh-t"><em>Fresh</em> Picks Today</div>
+                <a href="#" class="sh-a">View All <i class="fas fa-arrow-right"></i></a>
+            </div>
+            <div class="pgrid" id="pgrid">
+                {% for p in pid %}
+                    <div class="pcd g1 s1"
+                        data-cat="{{ p.product_category|lower }}"
+                        data-name="{{ p.product_name }}"
+                        data-price="{{ p.product_price }}"
+                        data-img="/media/{{ p.picture }}"
+                        data-id="{{ p.id }}">
+
+                        <div class="pcd-img">
+                            <img loading="lazy" src="/media/{{ p.picture }}" alt="{{ p.product_name }}">
+                            <span class="pcd-bdg">{{ p.budge_text }}</span>
+                            <div class="pcd-fav {% if p.id in wishlist_ids %}liked{% endif %}" onclick="twish(this,event,{{ p.id }})">
+                                <i class="{% if p.id in wishlist_ids %}fas{% else %}far{% endif %} fa-heart"></i>
+                            </div>
+                        </div>
+
+                        <div class="pcd-body">
+                            <div class="pcd-name">{{ p.product_name }}</div>
+                            <div class="pcd-qty">{{ p.brand }} · {{ p.weight_unit }}</div>
+                            <div class="pcd-foot">
+                                <div class="pcd-pp">
+                                    <span class="pcd-now">₹{{ p.product_price }}</span>
+                                </div>
+                                <button class="pcd-add">
+                                    <a href="{% url 'add_to_cart' pk=p.id %}" ><i class="fas fa-plus"></i></a>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <div class="sh" style="margin-bottom:16px;">
+                <div class="sh-t">Recent <em>Orders</em></div>
+                <a href="#profile" onclick="nav('profile'); showProfileSection('orders'); return false;" class="sh-a">View All <i class="fas fa-arrow-right"></i></a>
+            </div>
+            <div class="obox g1 s1">
+                <div class="oth">
+                    <span>Order ID</span>
+                    <span>Date</span>
+                    <span>Amount</span>
+                    <span>Items</span>
+                    <span>Status</span>
+                </div>
+                {% for order in orders|slice:":5" %}
+                <div class="orow">
+                    <span class="oid">#{{ order.order_id }}</span>
+                    <span>{{ order.created_at|date:"d M Y" }}</span>
+                    <span>₹{{ order.total_amount }}</span>
+                    <span>{{ order.items.count }}</span>
+                    <span>
+                        {% if order.status == 'Delivered' %}
+                            <span class="sp s1"><i class="fas fa-check-circle"></i> Delivered</span>
+                        {% elif order.status == 'In Transit' %}
+                            <span class="sp s2"><i class="fas fa-truck"></i> In Transit</span>
+                        {% elif order.status == 'Processing' %}
+                            <span class="sp s3"><i class="fas fa-clock"></i> Processing</span>
+                        {% else %}
+                            <span class="sp s3"><i class="fas fa-clock"></i> {{ order.status }}</span>
+                        {% endif %}
+                    </span>
+                </div>
+                {% empty %}
+                <div style="padding: 24px; text-align: center; color: var(--mist); font-weight: 600;">No orders found</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+<!-- CART SECTION REMOVED - NOW A SEPARATE PAGE -->
+
+    <!-- ═══════════════ PROFILE PAGE ═══════════════ -->
+    <div id="page-profile" class="page">
+        <div class="iwrap">
+            <div class="pgnav">
+                <button class="back-btn" onclick="nav('home')">
+                    <i class="fas fa-arrow-left"></i> Back to Home
+                </button>
+                <div class="pg-ttl">My Profile</div>
+            </div>
+            <div class="pgrid2">
+
+                <!-- LEFT SIDEBAR -->
+                <div class="psb g1 s1">
+                    <div class="ph">
+                        <div class="pav">
+                            <img src="{{ cid.pic.url }}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">
+                        </div>
+                        <div class="pnm">{{cid.firstname}} {{cid.lastname}}</div>
+                        <div class="pem">{{uid.email}}</div>
+                    </div>
+                    <div class="pkpis">
+                        <div class="kpi">
+                            <span class="kpi-v">24</span>
+                            <div class="kpi-l">Orders</div>
+                        </div>
+                        <div class="kpi">
+                            <span class="kpi-v">₹8.4k</span>
+                            <div class="kpi-l">Spent</div>
+                        </div>
+                        <div class="kpi">
+                            <span class="kpi-v">6</span>
+                            <div class="kpi-l">Wishlist</div>
+                        </div>
+                        <div class="kpi">
+                            <span class="kpi-v">3</span>
+                            <div class="kpi-l">Coupons</div>
+                        </div>
+                    </div>
+                    <div class="pnav">
+                        <a href="#" class="pni on" data-sec="info" onclick="showProfileSection('info');return false;"><i class="fas fa-user"></i> Personal Info</a>
+                        <a href="#" class="pni" data-sec="edit" onclick="showProfileSection('edit');return false;"><i class="fas fa-pen"></i> Edit Profile</a>
+                        <a href="#" class="pni" data-sec="orders" onclick="showProfileSection('orders');return false;"><i class="fas fa-box"></i> My Orders</a>
+                        <a href="#" class="pni" data-sec="address" onclick="showProfileSection('address');return false;"><i class="fas fa-map-marker-alt"></i> Addresses</a>
+                        <a href="#" class="pni" data-sec="wish" onclick="showProfileSection('wish');return false;"><i class="fas fa-heart"></i> Wishlist</a>
+                        <a href="{% url 'logout' %}" class="pni" style="color:#be123c;margin-top:8px;border-top:1.5px solid rgba(37,99,235,.08);padding-top:12px;"><i class="fas fa-sign-out-alt" style="color:#be123c;"></i> Logout</a>
+                    </div>
+                </div>
+
+                <!-- RIGHT SECTIONS -->
+                <div class="pright">
+
+                    <!-- SECTION: Personal Info — address REMOVED -->
+                    <div id="psec-info" class="pright-section active">
+                        <div class="prc g1 s1">
+                            <div class="prc-t"><i class="fas fa-user-circle"></i> Personal Information</div>
+                            <div class="info-g">
+                                <div class="ifd">
+                                    <label>First Name</label>
+                                    <div class="fv">{{cid.firstname}}</div>
+                                </div>
+                                <div class="ifd">
+                                    <label>Last Name</label>
+                                    <div class="fv">{{cid.lastname}}</div>
+                                </div>
+                                <div class="ifd">
+                                    <label>Email</label>
+                                    <div class="fv">{{uid.email}}</div>
+                                </div>
+                                <div class="ifd">
+                                    <label>Phone</label>
+                                    <div class="fv">{{cid.contactno}}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="prc g1 s1" style="padding:0;overflow:hidden;">
+                            <div style="padding:22px 26px 14px;border-bottom:1.5px solid rgba(37,99,235,.06);">
+                                <div class="prc-t" style="margin:0;"><i class="fas fa-box"></i> Recent Orders</div>
+                            </div>
+                            <div class="obox" style="border-radius:0;background:transparent;box-shadow:none;">
+                                <div class="oth">
+                                    <span>Order ID</span>
+                                    <span>Date</span>
+                                    <span>Amount</span>
+                                    <span>Items</span>
+                                    <span>Status</span>
+                                </div>
+                                {% for order in orders|slice:":3" %}
+                                <div class="orow">
+                                    <span class="oid">#{{ order.order_id }}</span>
+                                    <span>{{ order.created_at|date:"d M Y" }}</span>
+                                    <span>₹{{ order.total_amount }}</span>
+                                    <span>{{ order.items.count }}</span>
+                                    <span>
+                                        {% if order.status == 'Delivered' %}
+                                            <span class="sp s1"><i class="fas fa-check-circle"></i> Delivered</span>
+                                        {% elif order.status == 'In Transit' %}
+                                            <span class="sp s2"><i class="fas fa-truck"></i> In Transit</span>
+                                        {% elif order.status == 'Processing' %}
+                                            <span class="sp s3"><i class="fas fa-clock"></i> Processing</span>
+                                        {% else %}
+                                            <span class="sp s3"><i class="fas fa-clock"></i> {{ order.status }}</span>
+                                        {% endif %}
+                                    </span>
+                                </div>
+                                {% empty %}
+                                <div style="padding: 24px; text-align: center; color: var(--mist); font-weight: 600;">No orders found</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SECTION: Edit Profile -->
+                    <div id="psec-edit" class="pright-section">
+                        <form action="{% url 'edit_profile' %}" method="post" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <div class="prc g1 s1">
+                                <div class="prc-t"><i class="fas fa-pen"></i> Edit Profile</div>
+                                <div class="info-g" style="margin-bottom:20px;">
+                                    <div class="ifd">
+                                        <label>First Name </label>
+                                        <input class="finp" name="firstname" value="{{cid.firstname}}">
+                                    </div>
+                                    <div class="ifd">
+                                        <label>Last Name </label>
+                                        <input class="finp" name="lastname" value="{{cid.lastname}}">
+                                    </div>
+                                    <div class="ifd">
+                                        <label>Email </label>
+                                        <input class="finp" type="email" name="email" value="{{uid.email}}" readonly>
+                                    </div>
+                                    <div class="ifd">
+                                        <label>Phone </label>
+                                        <input class="finp" type="tel" name="contactno" value="{{cid.contactno}}">
+                                    </div>
+                                    <div class="ifd sp2">
+                                        <label>Profile Picture</label>
+                                        <input class="finp" type="file" name="pic" accept="image/*" style="padding:10px 14px;font-size:.88rem;">
+                                        <div style="font-size:.78rem;color:var(--mist);margin-top:5px;font-weight:500;"></div>
+                                    </div>
+                                </div>
+                                <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                                    <button type="submit" class="sbtn"><i class="fas fa-check"></i> Save Changes</button>
+                                    <button type="button" class="cbtn" onclick="showProfileSection('info')"><i class="fas fa-times"></i> Cancel</button>
+                                </div>
+                            </div>
+                        </form>
+                        <div class="dzone">
+                            <h4><i class="fas fa-triangle-exclamation"></i> Danger Zone</h4>
+                            <p>Deleting your account will permanently remove all your orders, addresses, wishlist and wallet balance. This cannot be undone.</p>
+                            <button class="delbtn"><i class="fas fa-trash-alt"></i> Delete My Account</button>
+                        </div>
+                    </div>
+
+                    <!-- SECTION: My Orders -->
+                    <div id="psec-orders" class="pright-section">
+                        <div class="prc g1 s1" style="padding:0;overflow:hidden;">
+                            <div style="padding:22px 26px 14px;border-bottom:1.5px solid rgba(37,99,235,.06);">
+                                <div class="prc-t" style="margin:0;"><i class="fas fa-box"></i> My Orders</div>
+                            </div>
+                            <div class="obox" style="border-radius:0;background:transparent;box-shadow:none;">
+                                <div class="oth">
+                                    <span>Order ID</span>
+                                    <span>Date</span>
+                                    <span>Amount</span>
+                                    <span>Items</span>
+                                    <span>Status</span>
+                                </div>
+                                {% for order in orders %}
+                                <div class="orow">
+                                    <span class="oid">#{{ order.order_id }}</span>
+                                    <span>{{ order.created_at|date:"d M Y" }}</span>
+                                    <span>₹{{ order.total_amount }}</span>
+                                    <span>{{ order.items.count }}</span>
+                                    <span>
+                                        {% if order.status == 'Delivered' %}
+                                            <span class="sp s1"><i class="fas fa-check-circle"></i> Delivered</span>
+                                        {% elif order.status == 'In Transit' %}
+                                            <span class="sp s2"><i class="fas fa-truck"></i> In Transit</span>
+                                        {% elif order.status == 'Processing' %}
+                                            <span class="sp s3"><i class="fas fa-clock"></i> Processing</span>
+                                        {% else %}
+                                            <span class="sp s3"><i class="fas fa-clock"></i> {{ order.status }}</span>
+                                        {% endif %}
+                                    </span>
+                                </div>
+                                {% empty %}
+                                <div style="padding: 24px; text-align: center; color: var(--mist); font-weight: 600;">No orders found</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SECTION: Addresses -->
+                    <div id="psec-address" class="pright-section">
+                        <div class="prc g1 s1">
+                            <div class="prc-t"><i class="fas fa-map-marker-alt"></i> My Addresses</div>
+                            <form method="POST" action="">
+                                {% csrf_token %}
+                                <div class="fg">
+                                    <div class="fgrp sp2">
+                                        <label>Flat / Building</label>
+                                        <input class="finp" placeholder="Enter your flat no" name="flat">
+                                    </div>
+                                    <div class="fgrp sp2">
+                                        <label>Street / Area</label>
+                                        <input class="finp" placeholder="Enter your area" name="area">
+                                    </div>
+                                    <div class="fgrp">
+                                        <label>City</label>
+                                        <input class="finp" placeholder="Enter your city" name="city">
+                                    </div>
+                                    <div class="fgrp">
+                                        <label>State</label>
+                                        <select class="finp" name="state">
+                                            <option>Gujarat</option>
+                                            <option>Maharashtra</option>
+                                            <option>Delhi</option>
+                                            <option>Rajasthan</option>
+                                        </select>
+                                    </div>
+                                    <div class="fgrp">
+                                        <label>PIN Code</label>
+                                        <input class="finp" placeholder="Enter your pin code" name="pincode">
+                                    </div>
+                                    <div class="fgrp">
+                                        <label>Landmark</label>
+                                        <input class="finp" placeholder="Enter near city mall" name="landmark">
+                                    </div>
+                                </div>
+                                <div style="margin-top:20px;">
+                                    <button class="sbtn"><i class="fas fa-check"></i> Save Address</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- SECTION: Wishlist -->
+                    <div id="psec-wish" class="pright-section">
+                        <div class="prc g1 s1">
+                            <div class="prc-t"><i class="fas fa-heart"></i> My Wishlist</div>
+                            {% if wishlist_items %}
+                                <div class="pgrid" style="margin-top:16px;">
+                                    {% for w in wishlist_items %}
+                                        <div class="pcd g1 s1"
+                                            data-cat="{{ w.product.product_category|lower }}"
+                                            data-name="{{ w.product.product_name }}"
+                                            data-price="{{ w.product.product_price }}"
+                                            data-img="/media/{{ w.product.picture }}"
+                                            data-id="{{ w.product.id }}">
+
+                                            <div class="pcd-img">
+                                                <img loading="lazy" src="/media/{{ w.product.picture }}" alt="{{ w.product.product_name }}">
+                                                <span class="pcd-bdg">{{ w.product.budge_text }}</span>
+                                                <div class="pcd-fav liked" onclick="twish(this,event,{{ w.product.id }})">
+                                                    <i class="fas fa-heart"></i>
+                                                </div>
+                                            </div>
+
+                                            <div class="pcd-body">
+                                                <div class="pcd-name">{{ w.product.product_name }}</div>
+                                                <div class="pcd-qty">{{ w.product.brand }} · {{ w.product.weight_unit }}</div>
+                                                <div class="pcd-foot">
+                                                    <div class="pcd-pp">
+                                                        <span class="pcd-now">₹{{ w.product.product_price }}</span>
+                                                    </div>
+                                                    <button class="pcd-add">
+                                                        <a href="{% url 'add_to_cart' pk=w.product.id %}"><i class="fas fa-plus"></i></a>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div style="text-align:center;padding:40px 20px;">
+                                    <div style="font-size:3rem;margin-bottom:12px;">💔</div>
+                                    <p style="color:var(--mist);font-size:.95rem;font-weight:600;">Your wishlist is empty.<br>Tap the ❤️ on any product to save it here!</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                </div><!-- /pright -->
+            </div>
+        </div>
+    </div>
+
+    <footer>© 2026 <b>QuickBasket</b> · Fresh &amp; Fast · Groceries delivered in 10 minutes 🛒</footer>
+
+</body>
+
+</html>

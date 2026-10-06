@@ -1,0 +1,426 @@
+{% load static %}
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuickBasket - Checkout</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'customer/css/userpanel.css' %}">
+</head>
+
+<body>
+    <div class="bg-layer"></div>
+    <div class="blob b1"></div>
+    <div class="blob b2"></div>
+    <div class="blob b3"></div>
+    <div class="blob b4"></div>
+    <div class="blob b5"></div>
+    <div class="grain"></div>
+
+    <!-- HEADER -->
+    <header>
+        <a class="logo" href="{% url 'view_product' %}">
+            <div class="logo-icon">🛒</div>
+            <div>
+                <div class="logo-name">QuickBasket</div>
+                <div class="logo-tag">Fresh · Fast · Always</div>
+            </div>
+        </a>
+        <div class="hright">
+            <div class="dbadge">
+                <i class="fas fa-bolt"></i> 10 min delivery
+            </div>
+            <a class="cart-btn" href="{% url 'view_cart' %}">
+                <i class="fas fa-basket-shopping"></i> My Cart
+                <span class="cbadge" id="cBadge" style="{% if not cart_count or cart_count == 0 %}display: none;{% endif %}">{{ cart_count }}</span>
+            </a>
+
+            <!-- Profile dropdown — pure CSS checkbox trick -->
+            <div class="co-profile-wrap">
+                <input type="checkbox" id="profileToggle" class="profile-toggle-inp">
+                <label class="ubtn" for="profileToggle">
+                    <div class="uav">
+                        <img src="{{ cid.pic.url }}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">
+                    </div>
+                    <span class="unm">{{ cid.firstname }} {{ cid.lastname }}</span>
+                </label>
+                <div class="co-profile-menu">
+                    <a href="{% url 'view_product' %}#profile">👤 View Profile</a>
+                    <a href="{% url 'logout' %}">🚪 Logout</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- CHECKOUT PAGE -->
+    <div class="page active">
+        <div class="co-wrap">
+
+            <!-- Progress Steps -->
+            <div class="co-steps">
+                <div class="co-step done">
+                    <div class="co-step-ico"><i class="fas fa-check"></i></div>
+                    <span>Cart</span>
+                </div>
+                <div class="co-step-line done-line"></div>
+                <div class="co-step active-step">
+                    <div class="co-step-ico"><i class="fas fa-map-marker-alt"></i></div>
+                    <span>Address</span>
+                </div>
+                <div class="co-step-line"></div>
+                <div class="co-step">
+                    <div class="co-step-ico"><i class="fas fa-credit-card"></i></div>
+                    <span>Payment</span>
+                </div>
+                <div class="co-step-line"></div>
+                <div class="co-step">
+                    <div class="co-step-ico"><i class="fas fa-circle-check"></i></div>
+                    <span>Confirm</span>
+                </div>
+            </div>
+
+            <form class="co-layout" method="post" action="{% url 'checkout' %}">
+                {% csrf_token %}
+
+                <!-- LEFT COLUMN -->
+                <div class="co-left">
+
+                    <!-- SECTION 1: Delivery Address -->
+                    <div class="co-card g1 s1">
+                        <div class="co-card-header">
+                            <div class="co-card-num">1</div>
+                            <div>
+                                <div class="co-card-title">Delivery Address</div>
+                                <div class="co-card-sub">Where should we deliver your order?</div>
+                            </div>
+                        </div>
+
+                        <div class="co-form">
+                            <div class="co-fg-row">
+                                <div class="co-fgrp">
+                                    <label for="fname">Full Name</label>
+                                    <input type="text" id="fname" name="full_name" class="co-inp" placeholder="Enter full name" value="{{ cid.firstname }} {{ cid.lastname }}">
+                                </div>
+                                <div class="co-fgrp">
+                                    <label for="fphone">Phone Number</label>
+                                    <input type="tel" id="fphone" name="phone" class="co-inp" placeholder="+91 XXXXX XXXXX" value="{{ cid.contactno }}">
+                                </div>
+                            </div>
+                            <div class="co-fgrp">
+                                <label for="faddr1">Address Line 1</label>
+                                <input type="text" id="faddr1" name="address1" class="co-inp" placeholder="House/Flat No., Building Name, Street">
+                            </div>
+                            <div class="co-fgrp">
+                                <label for="faddr2">Address Line 2 <span class="opt-label">(Optional)</span></label>
+                                <input type="text" id="faddr2" name="address2" class="co-inp" placeholder="Area, Landmark">
+                            </div>
+                            <div class="co-fg-row co-fg-three">
+                                <div class="co-fgrp">
+                                    <label for="fcity">City</label>
+                                    <input type="text" id="fcity" name="city" class="co-inp" placeholder="City">
+                                </div>
+                                <div class="co-fgrp">
+                                    <label for="fstate">State</label>
+                                    <input type="text" id="fstate" name="state" class="co-inp" placeholder="State">
+                                </div>
+                                <div class="co-fgrp">
+                                    <label for="fpin">Pincode</label>
+                                    <input type="text" id="fpin" name="pincode" class="co-inp" placeholder="6-digit pincode" maxlength="6">
+                                </div>
+                            </div>
+
+                            <!-- Address Type — pure CSS radio -->
+                            <div class="co-fgrp">
+                                <label>Save As</label>
+                                <div class="addr-tags">
+                                    <input type="radio" name="addr_type" id="at-home" value="home" checked class="addr-radio">
+                                    <label class="addr-tag" for="at-home"><i class="fas fa-home"></i> Home</label>
+
+                                    <input type="radio" name="addr_type" id="at-work" value="work" class="addr-radio">
+                                    <label class="addr-tag" for="at-work"><i class="fas fa-briefcase"></i> Work</label>
+
+                                    <input type="radio" name="addr_type" id="at-other" value="other" class="addr-radio">
+                                    <label class="addr-tag" for="at-other"><i class="fas fa-location-dot"></i> Other</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 2: Payment Method — pure CSS radio accordion -->
+                    <div class="co-card g1 s1">
+                        <div class="co-card-header">
+                            <div class="co-card-num">2</div>
+                            <div>
+                                <div class="co-card-title">Payment Method</div>
+                                <div class="co-card-sub">Choose how you want to pay</div>
+                            </div>
+                        </div>
+
+                        <div class="pay-options">
+
+                            <!-- UPI -->
+                            <div class="pay-opt-wrap">
+                                <input type="radio" name="payment" id="pay-upi" value="upi" checked class="pay-radio">
+                                <label class="pay-opt-box" for="pay-upi">
+                                    <div class="pay-opt-left">
+                                        <div class="pay-ico upi-ico"><i class="fas fa-mobile-screen"></i></div>
+                                        <div>
+                                            <div class="pay-title">UPI Payment</div>
+                                            <div class="pay-sub">GPay, PhonePe, Paytm &amp; more</div>
+                                        </div>
+                                    </div>
+                                    <div class="pay-check"><i class="fas fa-circle-check"></i></div>
+                                </label>
+                                <div class="pay-panel">
+                                    <div class="upi-apps">
+                                        <input type="radio" name="upi_app" id="upi-gpay" value="gpay" checked class="upi-radio">
+                                        <label class="upi-app" for="upi-gpay">
+                                            <span class="upi-app-ico gpay-ico">G</span>
+                                            <span>GPay</span>
+                                        </label>
+
+                                        <input type="radio" name="upi_app" id="upi-phonepe" value="phonepe" class="upi-radio">
+                                        <label class="upi-app" for="upi-phonepe">
+                                            <span class="upi-app-ico ppe-ico">Pe</span>
+                                            <span>PhonePe</span>
+                                        </label>
+
+                                        <input type="radio" name="upi_app" id="upi-paytm" value="paytm" class="upi-radio">
+                                        <label class="upi-app" for="upi-paytm">
+                                            <span class="upi-app-ico paytm-ico">P</span>
+                                            <span>Paytm</span>
+                                        </label>
+
+                                        <input type="radio" name="upi_app" id="upi-other" value="other" class="upi-radio">
+                                        <label class="upi-app" for="upi-other">
+                                            <span class="upi-app-ico other-ico"><i class="fas fa-plus"></i></span>
+                                            <span>Other</span>
+                                        </label>
+                                    </div>
+                                    <div class="co-fgrp" style="margin-top:14px;">
+                                        <label for="upiId">Or Enter UPI ID</label>
+                                        <input type="text" id="upiId" name="upi_id" class="co-inp" placeholder="yourname@upi">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Credit/Debit Card -->
+                            <div class="pay-opt-wrap">
+                                <input type="radio" name="payment" id="pay-card" value="card" class="pay-radio">
+                                <label class="pay-opt-box" for="pay-card">
+                                    <div class="pay-opt-left">
+                                        <div class="pay-ico card-ico"><i class="fas fa-credit-card"></i></div>
+                                        <div>
+                                            <div class="pay-title">Credit / Debit Card</div>
+                                            <div class="pay-sub">Visa, Mastercard, RuPay</div>
+                                        </div>
+                                    </div>
+                                    <div class="pay-check"><i class="fas fa-circle-check"></i></div>
+                                </label>
+                                <div class="pay-panel">
+                                    <div class="co-fgrp">
+                                        <label for="cardNum">Card Number</label>
+                                        <div class="card-num-wrap">
+                                            <i class="fas fa-credit-card card-inp-ico"></i>
+                                            <input type="text" id="cardNum" name="card_number" class="co-inp card-inp" placeholder="1234  5678  9012  3456" maxlength="19">
+                                        </div>
+                                    </div>
+                                    <div class="co-fg-row co-fg-three" style="margin-top:14px;">
+                                        <div class="co-fgrp">
+                                            <label for="cardName">Cardholder Name</label>
+                                            <input type="text" id="cardName" name="card_name" class="co-inp" placeholder="Name on card">
+                                        </div>
+                                        <div class="co-fgrp">
+                                            <label for="cardExp">Expiry</label>
+                                            <input type="text" id="cardExp" name="card_expiry" class="co-inp" placeholder="MM / YY" maxlength="7">
+                                        </div>
+                                        <div class="co-fgrp">
+                                            <label for="cardCvv">CVV</label>
+                                            <input type="password" id="cardCvv" name="card_cvv" class="co-inp" placeholder="•••" maxlength="3">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Net Banking -->
+                            <div class="pay-opt-wrap">
+                                <input type="radio" name="payment" id="pay-nb" value="netbanking" class="pay-radio">
+                                <label class="pay-opt-box" for="pay-nb">
+                                    <div class="pay-opt-left">
+                                        <div class="pay-ico nb-ico"><i class="fas fa-building-columns"></i></div>
+                                        <div>
+                                            <div class="pay-title">Net Banking</div>
+                                            <div class="pay-sub">All major banks supported</div>
+                                        </div>
+                                    </div>
+                                    <div class="pay-check"><i class="fas fa-circle-check"></i></div>
+                                </label>
+                                <div class="pay-panel">
+                                    <div class="nb-banks">
+                                        <input type="radio" name="bank" id="bank-sbi" value="sbi" class="bank-radio">
+                                        <label class="nb-bank" for="bank-sbi"><i class="fas fa-university"></i> SBI</label>
+
+                                        <input type="radio" name="bank" id="bank-hdfc" value="hdfc" class="bank-radio">
+                                        <label class="nb-bank" for="bank-hdfc"><i class="fas fa-university"></i> HDFC</label>
+
+                                        <input type="radio" name="bank" id="bank-icici" value="icici" class="bank-radio">
+                                        <label class="nb-bank" for="bank-icici"><i class="fas fa-university"></i> ICICI</label>
+
+                                        <input type="radio" name="bank" id="bank-axis" value="axis" class="bank-radio">
+                                        <label class="nb-bank" for="bank-axis"><i class="fas fa-university"></i> Axis</label>
+
+                                        <input type="radio" name="bank" id="bank-kotak" value="kotak" class="bank-radio">
+                                        <label class="nb-bank" for="bank-kotak"><i class="fas fa-university"></i> Kotak</label>
+
+                                        <input type="radio" name="bank" id="bank-other" value="other" class="bank-radio">
+                                        <label class="nb-bank" for="bank-other"><i class="fas fa-university"></i> Other</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Cash on Delivery -->
+                            <div class="pay-opt-wrap">
+                                <input type="radio" name="payment" id="pay-cod" value="cod" class="pay-radio">
+                                <label class="pay-opt-box" for="pay-cod">
+                                    <div class="pay-opt-left">
+                                        <div class="pay-ico cod-ico"><i class="fas fa-money-bill-wave"></i></div>
+                                        <div>
+                                            <div class="pay-title">Cash on Delivery</div>
+                                            <div class="pay-sub">Pay when order arrives</div>
+                                        </div>
+                                    </div>
+                                    <div class="pay-check"><i class="fas fa-circle-check"></i></div>
+                                </label>
+                                <div class="pay-panel">
+                                    <div class="cod-note">
+                                        <i class="fas fa-circle-info"></i>
+                                        Please keep exact change ready. Our delivery partner will collect ₹{{ net_amount }} at your doorstep.
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- SECTION 3: Promo Code -->
+                    <div class="co-card g1 s1">
+                        <div class="co-card-header">
+                            <div class="co-card-num">3</div>
+                            <div>
+                                <div class="co-card-title">Promo / Coupon Code</div>
+                                <div class="co-card-sub">Have a discount code? Apply it here</div>
+                            </div>
+                        </div>
+                        <div class="promo-row">
+                            <div class="promo-inp-wrap">
+                                <i class="fas fa-tag promo-ico"></i>
+                                <input type="text" name="coupon_code" class="co-inp promo-inp" placeholder="Enter coupon code">
+                            </div>
+                            <button class="apply-btn" type="button" onclick="alert('Coupon applied! (Mockup)')">Apply</button>
+                        </div>
+
+                        <!-- Available Coupons -->
+                        <div class="avail-coupons">
+                            <div class="avail-label">Available Offers</div>
+                            <div class="coupon-list">
+                                <div class="coupon-item">
+                                    <div class="coupon-code">WELCOME10</div>
+                                    <div class="coupon-desc">₹65 off on first order</div>
+                                </div>
+                                <div class="coupon-item">
+                                    <div class="coupon-code">FRESH20</div>
+                                    <div class="coupon-desc">20% off on fruits &amp; veggies</div>
+                                </div>
+                                <div class="coupon-item">
+                                    <div class="coupon-code">FREEDEL</div>
+                                    <div class="coupon-desc">Free delivery on orders above ₹199</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- RIGHT COLUMN — Order Summary -->
+                <div class="co-right">
+                    <div class="co-summary-card g1 s1">
+                        <div class="co-sum-title">Order Summary</div>
+
+                        <div class="co-sum-items">
+                            {% for cartitem in items %}
+                            <div class="co-sum-item">
+                                <div class="co-sum-img">
+                                    <img src="{{ cartitem.product.picture.url }}" alt="{{ cartitem.product.product_name }}">
+                                </div>
+                                <div class="co-sum-info">
+                                    <div class="co-sum-nm">{{ cartitem.product.product_name }}</div>
+                                    <div class="co-sum-qty">Qty: {{ cartitem.qty }}</div>
+                                </div>
+                                <div class="co-sum-price">₹{{ cartitem.productprice }}</div>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <hr class="co-hr">
+
+                        <div class="co-sum-rows">
+                            <div class="co-sum-row">
+                                <span>Subtotal</span>
+                                <span>₹{{ total_amount }}</span>
+                            </div>
+                            <div class="co-sum-row">
+                                <span>Discount <span class="d-tag">WELCOME10</span></span>
+                                <span class="d-val">−₹65</span>
+                            </div>
+                            <div class="co-sum-row">
+                                <span>Delivery</span>
+                                <span class="free-del">FREE</span>
+                            </div>
+                            <div class="co-sum-row">
+                                <span>Taxes &amp; Fees</span>
+                                <span>₹0</span>
+                            </div>
+                        </div>
+
+                        <hr class="co-hr">
+
+                        <div class="co-sum-total">
+                            <span>Total Payable</span>
+                            <span>₹{{ net_amount }}</span>
+                        </div>
+
+                        <div class="co-save-msg">
+                            <i class="fas fa-tag"></i> You save ₹65 on this order!
+                        </div>
+
+                        <div class="co-del-time">
+                            <i class="fas fa-bolt" style="color:#f59e0b;"></i>
+                            <div>
+                                <div class="del-time-t">Estimated Delivery</div>
+                                <div class="del-time-v">10 – 15 minutes</div>
+                            </div>
+                        </div>
+
+                        <!-- Place Order — Django form submit -->
+                        <button class="place-order-btn" type="submit">
+                            <i class="fas fa-lock"></i> Place Order · ₹{{ net_amount }}
+                        </button>
+
+                        <div class="secure-note">
+                            <i class="fas fa-shield-halved"></i> 100% Secure &amp; Encrypted Payment
+                        </div>
+                    </div>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <footer>© 2026 <b>QuickBasket</b> · Fresh &amp; Fast · Groceries delivered in 10 minutes 🛒</footer>
+
+</body>
+</html>

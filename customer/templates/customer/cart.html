@@ -1,0 +1,158 @@
+{% load static %}
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuickBasket - My Cart</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'customer/css/userpanel.css' %}">
+    <script src="{% static 'customer/js/userpanel.js' %}" defer></script>
+</head>
+
+<body>
+    <div class="bg-layer"></div>
+    <div class="blob b1"></div>
+    <div class="blob b2"></div>
+    <div class="blob b3"></div>
+    <div class="blob b4"></div>
+    <div class="blob b5"></div>
+    <div class="grain"></div>
+    <div id="toast">
+        <i class="fas fa-circle-check" style="color:#6ee7b7;"></i>
+        <span id="tmsg"></span>
+    </div>
+
+    <!-- HEADER -->
+    <header>
+        <div class="logo" data-url="{% url 'view_product' %}" onclick="location.href=this.dataset.url;">
+            <div class="logo-icon">🛒</div>
+            <div>
+                <div class="logo-name">QuickBasket</div>
+                <div class="logo-tag">Fresh · Fast · Always</div>
+            </div>
+        </div>
+        <div class="hright">
+            <div class="dbadge">
+                <i class="fas fa-bolt"></i> 10 min delivery
+            </div>
+            <button class="cart-btn active">
+                <i class="fas fa-basket-shopping"></i> My Cart
+                <span class="cbadge" id="cBadge"
+                    style="{% if not cart_count or cart_count == 0 %}display: none;{% endif %}">{{ cart_count|default:0
+                    }}</span>
+            </button>
+            <div class="ubtn" onclick="toggleMenu(event)">
+                <div class="uav">
+                    <img src="{{ cid.pic.url }}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">
+                </div>
+                <span class="unm">{{cid.firstname}} {{cid.lastname}}</span>
+            </div>
+            <div class="profile-menu" id="profileMenu">
+                <div data-url="{% url 'view_product' %}#profile" onclick="location.href=this.dataset.url;">👤 View
+                    Profile</div>
+                <a href="{% url 'logout' %}">🚪 Logout</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- ═══════════════ CART PAGE ═══════════════ -->
+    <div id="page-cart" class="page active">
+        <div class="cwrap">
+            <div class="pgnav">
+                <button class="back-btn" data-url="{% url 'view_product' %}" onclick="location.href=this.dataset.url;">
+                    <i class="fas fa-chevron-left"></i> Continue Shopping
+                </button>
+                <div class="pg-ttl">My Cart <span class="tt-ico">🛍️</span></div>
+            </div>
+
+            {% if items %}
+            <div id="cfull" class="cart-layout">
+                <!-- Cart Items List -->
+                <div class="cbox g1 s1">
+                    <div id="cStaticList">
+                        <!-- Item 1: Bananas -->
+                        {% for cartitem in items %}
+                        <div class="ci" id="row-{{cartitem.id}}">
+                            <div class="ci-img">
+                                <img src="{{cartitem.product.picture.url}}">
+                            </div>
+                            <div class="ci-info">
+                                <div class="ci-nm">{{cartitem.product.product_name}}</div>
+                                <div class="ci-u">₹ {{cartitem.product.product_price}} |
+                                    {{cartitem.product.product_category}} | {{cartitem.product.weight_unit}}g</div>
+                            </div>
+                            <div class="ci-qr">
+                                <button class="ci-qb" onclick="updateCartItem({{cartitem.id}}, 'decrease')"><i
+                                        class="fas fa-minus"></i></button>
+                                <div class="ci-qn" id="qty-{{cartitem.id}}">{{cartitem.qty}}</div>
+                                <button class="ci-qb plus" onclick="updateCartItem({{cartitem.id}}, 'increase')"><i
+                                        class="fas fa-plus"></i></button>
+                            </div>
+                            <div class="ci-price" id="price-{{cartitem.id}}">₹{{cartitem.productprice}}</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Summary Sidebar -->
+                <div class="cside">
+                    <div class="sbox g1 s1">
+                        <div class="sth">Order Summary</div>
+                        <div class="sr">
+                            <span>Subtotal</span>
+                            <span id="subtotal-val">₹{{ total_amount }}</span>
+                        </div>
+                        <div class="sr">
+                            <span>Discount <span class="d-tag">WELCOME10</span></span>
+                            <span class="d-val">−₹65</span>
+                        </div>
+                        <div class="sr">
+                            <span>Delivery</span>
+                            <span class="free-del">FREE</span>
+                        </div>
+                        <hr class="shr">
+                        <div class="stot">
+                            <span>Total</span>
+                            <span id="total-val">₹{{ net_amount }}</span>
+                        </div>
+                        <!-- <div class="save-msg">
+                            <i class="fas fa-tag"></i> You save ₹65 on this order!
+                        </div> -->
+                        <a href="{% url 'checkout' %}" style="text-decoration: none">
+                            <button class="chk-btn">Proceed to Checkout →</button>
+                        </a>
+                    </div>
+
+                    <div class="fdel-bdg">
+                        <i class="fas fa-truck" style="color:#ef4444;"></i> Free delivery on this order
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div id="cempty" class="empty-cart-state"
+                style="text-align: center; padding: 60px 20px; background: rgba(255, 255, 255, 0.45); backdrop-filter: blur(10px); border-radius: 24px; border: 1.5px solid rgba(255, 255, 255, 0.5); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03); max-width: 600px; margin: 40px auto;">
+                <div style="font-size: 4rem; margin-bottom: 20px; animation: float 3s ease-in-out infinite;">🛍️</div>
+                <h2 style="font-size: 1.8rem; font-weight: 700; color: #0f172a; margin-bottom: 10px;">Your Cart is Empty
+                </h2>
+                <p style="color: #64748b; font-size: 1rem; margin-bottom: 30px; font-weight: 500;">Add some fresh items
+                    to start your shopping journey!</p>
+                <a href="{% url 'view_product' %}" style="text-decoration: none;">
+                    <button class="chk-btn"
+                        style="width: auto; padding: 12px 32px; display: inline-flex; align-items: center; gap: 8px; margin: 0 auto;">
+                        <i class="fas fa-arrow-left"></i> Start Shopping
+                    </button>
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <footer>© 2026 <b>QuickBasket</b> · Fresh &amp; Fast · Groceries delivered in 10 minutes 🛒</footer>
+
+</body>
+
+</html>
